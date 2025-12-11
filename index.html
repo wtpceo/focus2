@@ -633,6 +633,55 @@
             z-index: 2000;
         }
         .loading.hidden { display: none; }
+
+        /* 로드뷰 모달 */
+        .roadview-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #000;
+            z-index: 2000;
+            flex-direction: column;
+        }
+        .roadview-modal.open { display: flex; }
+        .roadview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #fff;
+            border-bottom: 1px solid #eee;
+        }
+        .roadview-header span {
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .roadview-close {
+            width: 36px; height: 36px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .roadview-close svg { width: 20px; height: 20px; }
+        .roadview-container {
+            flex: 1;
+            width: 100%;
+        }
+        .roadview-unavailable {
+            display: none;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            color: #666;
+            gap: 16px;
+        }
+        .roadview-unavailable p { font-size: 16px; }
         .loading-spinner {
             width: 36px; height: 36px;
             border: 3px solid #f0f0f0;
@@ -1229,7 +1278,37 @@
                     </svg>
                     길찾기
                 </button>
+                <button class="info-btn secondary" onclick="openRoadview()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path>
+                        <path d="M2 12h20"></path>
+                    </svg>
+                    로드뷰
+                </button>
             </div>
+        </div>
+    </div>
+
+    <!-- 로드뷰 모달 -->
+    <div class="roadview-modal" id="roadviewModal">
+        <div class="roadview-header">
+            <span id="roadviewTitle">로드뷰</span>
+            <button class="roadview-close" onclick="closeRoadview()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="roadview-container" id="roadviewContainer"></div>
+        <div class="roadview-unavailable" id="roadviewUnavailable">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="48" height="48">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+            </svg>
+            <p>이 위치의 로드뷰를 사용할 수 없습니다</p>
         </div>
     </div>
 
@@ -2044,6 +2123,49 @@
                     window.open(`https://map.kakao.com/link/search/${addr}`, '_blank');
                 }
             }
+        }
+
+        let roadview = null;
+        let roadviewClient = null;
+
+        function openRoadview() {
+            if (!selectedLocation || !selectedLocation.lat || !selectedLocation.lng) {
+                showToast('위치 정보가 없습니다');
+                return;
+            }
+
+            const modal = document.getElementById('roadviewModal');
+            const container = document.getElementById('roadviewContainer');
+            const unavailable = document.getElementById('roadviewUnavailable');
+
+            document.getElementById('roadviewTitle').textContent = selectedLocation.name + ' 로드뷰';
+            modal.classList.add('open');
+            container.style.display = 'block';
+            unavailable.style.display = 'none';
+
+            const position = new kakao.maps.LatLng(selectedLocation.lat, selectedLocation.lng);
+
+            // 로드뷰 객체 생성
+            roadview = new kakao.maps.Roadview(container);
+            roadviewClient = new kakao.maps.RoadviewClient();
+
+            // 가장 가까운 로드뷰 파노라마 ID 찾기
+            roadviewClient.getNearestPanoId(position, 50, function(panoId) {
+                if (panoId === null) {
+                    // 로드뷰를 사용할 수 없는 위치
+                    container.style.display = 'none';
+                    unavailable.style.display = 'flex';
+                } else {
+                    roadview.setPanoId(panoId, position);
+                }
+            });
+        }
+
+        function closeRoadview() {
+            const modal = document.getElementById('roadviewModal');
+            modal.classList.remove('open');
+            roadview = null;
+            roadviewClient = null;
         }
 
         function openKakaoMapDetail() {
