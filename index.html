@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>설치현황</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            height: 100dvh;
+            background: #f5f5f5;
+        }
+
+        /* 헤더 */
+        .header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 56px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            z-index: 1000;
+            gap: 12px;
+        }
+        .header h1 {
+            font-size: 17px;
+            font-weight: 600;
+            color: #1a1a1a;
+            flex: 1;
+            letter-spacing: -0.3px;
+        }
+        .header-btn {
+            width: 40px; height: 40px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .header-btn:hover { background: #f5f5f5; }
+        .header-btn:active { background: #eee; }
+        .header-btn svg { width: 22px; height: 22px; color: #333; }
+
+        /* 검색바 */
+        .search-bar {
+            position: fixed;
+            top: 64px; left: 12px; right: 12px;
+            z-index: 1000;
+        }
+        .search-input {
+            width: 100%;
+            height: 46px;
+            padding: 0 44px;
+            border: none;
+            border-radius: 12px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            font-size: 15px;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        .search-input:focus { box-shadow: 0 2px 12px rgba(0,0,0,0.18); }
+        .search-input::placeholder { color: #999; }
+        .search-icon, .search-clear {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .search-icon { left: 14px; color: #999; }
+        .search-icon svg { width: 20px; height: 20px; }
+        .search-clear {
+            right: 8px;
+            width: 32px; height: 32px;
+            border: none;
+            background: #eee;
+            border-radius: 50%;
+            cursor: pointer;
+            display: none;
+        }
+        .search-clear.show { display: flex; }
+        .search-clear svg { width: 16px; height: 16px; color: #666; }
+
+        /* 통합 검색 드롭다운 */
+        .search-dropdown {
+            position: absolute;
+            top: 52px;
+            left: 0;
+            right: 0;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            max-height: 60vh;
+            overflow-y: auto;
+            display: none;
+            z-index: 1001;
+        }
+        .search-dropdown.show { display: block; }
+        .search-dropdown-section {
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .search-dropdown-section:last-child { border-bottom: none; }
+        .search-dropdown-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #888;
+            background: #f8f9fa;
+        }
+        .search-dropdown-title svg { width: 14px; height: 14px; }
+        .search-dropdown-list { }
+        .search-dropdown-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            border-bottom: 1px solid #f5f5f5;
+            transition: background 0.15s;
+        }
+        .search-dropdown-item:last-child { border-bottom: none; }
+        .search-dropdown-item:hover { background: #f5f5f5; }
+        .search-dropdown-item:active { background: #eee; }
+        .search-dropdown-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+        .search-dropdown-item-address {
+            font-size: 12px;
+            color: #888;
+        }
+        .search-dropdown-item-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            margin-left: 6px;
+        }
+        .search-dropdown-item-badge.apt { background: #3b82f6; color: #fff; }
+        .search-dropdown-item-badge.place { background: #22c55e; color: #fff; }
+        .search-dropdown-item-badge.htpost { background: #f97316; color: #fff; }
+        .search-dropdown-empty {
+            padding: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 13px;
+        }
+        .search-dropdown-loading {
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+        }
+
+        /* 지도 */
+        #map {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        /* 필터 패널 */
+        .filter-panel {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1001;
+            max-height: 75vh;
+            overflow-y: auto;
+        }
+        .filter-panel.open { transform: translateY(0); }
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 18px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            position: sticky; top: 0;
+            background: #fff;
+            z-index: 1;
+        }
+        .filter-header h2 { font-size: 17px; font-weight: 600; }
+        .filter-reset {
+            font-size: 14px;
+            color: #666;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        .filter-reset:hover { background: #f5f5f5; }
+        .filter-close {
+            width: 32px; height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .filter-close svg { width: 18px; height: 18px; color: #666; }
+        .filter-section {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .filter-section h3 {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+        .filter-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .filter-chip {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.15s;
+            color: #555;
+        }
+        .filter-chip:hover { border-color: #ccc; background: #fafafa; }
+        .filter-chip.active {
+            background: #FEE500;
+            color: #000;
+            border-color: #FEE500;
+            font-weight: 500;
+        }
+        .filter-actions {
+            padding: 16px 20px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+            display: flex;
+            gap: 10px;
+        }
+        .filter-apply {
+            flex: 1;
+            padding: 15px;
+            background: #FEE500;
+            color: #000;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .filter-apply:hover { background: #fdd835; }
+        .filter-apply:active { background: #fbc02d; }
+
+        /* 정보 패널 */
+        .info-panel {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .info-panel.open { transform: translateY(0); }
+        .info-panel.commission-10 { border: 3px solid #3b82f6; border-bottom: none; }
+        .info-panel.commission-15 { border: 3px solid #ef4444; border-bottom: none; }
+        .info-handle {
+            width: 36px; height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            margin: 12px auto 0;
+        }
+        .info-content {
+            padding: 16px 20px;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+        }
+        .info-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .info-name {
+            font-size: 19px;
+            font-weight: 700;
+            color: #1a1a1a;
+            flex: 1;
+            line-height: 1.3;
+        }
+        .info-grade-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .info-grade-badge.s-plus { background: #7c3aed; color: #fff; }
+        .info-grade-badge.s { background: #a855f7; color: #fff; }
+        .info-grade-badge.a-plus { background: #ef4444; color: #fff; }
+        .info-grade-badge.a { background: #3b82f6; color: #fff; }
+        .info-grade-badge.b { background: #22c55e; color: #fff; }
+        .info-address {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 16px;
+            line-height: 1.4;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+        .info-item {
+            background: #f8f9fa;
+            padding: 12px 10px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .info-label {
+            font-size: 11px;
+            color: #888;
+            margin-bottom: 4px;
+            font-weight: 500;
+        }
+        .info-value {
+            font-size: 14px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+
+        /* 영업제한 업종 섹션 */
+        .restriction-section {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .restriction-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #dc2626;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .restriction-title svg {
+            width: 16px;
+            height: 16px;
+        }
+        .restriction-items {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .restriction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+        }
+        .restriction-label {
+            color: #666;
+        }
+        .restriction-value {
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        .restriction-date {
+            font-size: 12px;
+            color: #888;
+            margin-left: 8px;
+        }
+
+        /* HT POST 비고 섹션 */
+        .note-section {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .note-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #ea580c;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .note-title svg {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        .note-section.warning {
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+        .note-section.warning .note-title {
+            color: #dc2626;
+        }
+
+        /* 금액 클릭 스타일 */
+        .price-clickable {
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .price-clickable:hover {
+            transform: scale(1.05);
+        }
+        .price-clickable::after {
+            content: '클릭시 상세';
+            position: absolute;
+            bottom: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: #999;
+            white-space: nowrap;
+        }
+
+        /* 금액 상세 모달 */
+        .price-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.9);
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            z-index: 2000;
+            padding: 24px;
+            min-width: 300px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s ease;
+        }
+        .price-modal.open {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        .price-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .price-modal-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .price-modal-close {
+            width: 28px;
+            height: 28px;
+            border: none;
+            background: #f0f0f0;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .price-modal-close:hover {
+            background: #e0e0e0;
+        }
+        .price-modal-close svg {
+            width: 14px;
+            height: 14px;
+            color: #666;
+        }
+        .price-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .price-item:last-of-type {
+            border-bottom: none;
+        }
+        .price-period {
+            font-size: 15px;
+            color: #555;
+            font-weight: 500;
+        }
+        .price-discount {
+            font-size: 11px;
+            color: #ef4444;
+            margin-left: 6px;
+            font-weight: 600;
+        }
+        .price-amount {
+            font-size: 17px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+        .price-vat {
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .price-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+        }
+        .price-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .info-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .info-btn {
+            flex: 1;
+            min-width: 80px;
+            padding: 12px 8px;
+            border-radius: 10px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+        .info-btn svg { width: 16px; height: 16px; }
+        .info-btn.primary { background: #FEE500; color: #000; }
+        .info-btn.primary:hover { background: #fdd835; }
+        .info-btn.secondary { background: #f0f0f0; color: #333; }
+        .info-btn.secondary:hover { background: #e5e5e5; }
+
+        /* 오버레이 */
+        .overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            z-index: 999;
+        }
+        .overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* 플로팅 버튼 */
+        .floating-btns {
+            position: fixed;
+            right: 16px; bottom: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 500;
+        }
+        .float-btn {
+            width: 48px; height: 48px;
+            background: #fff;
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .float-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+        .float-btn:active { transform: translateY(0); }
+        .float-btn svg { width: 22px; height: 22px; color: #333; }
+        .float-btn.active { background: #FEE500; }
+
+        /* 통계 배지 */
+        .stats-badge {
+            position: fixed;
+            left: 16px; bottom: 100px;
+            background: #fff;
+            padding: 10px 16px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.12);
+            font-size: 13px;
+            z-index: 500;
+            font-weight: 500;
+            color: #555;
+        }
+        .stats-badge strong { color: #3b82f6; font-weight: 700; }
+
+        /* 로딩 */
+        .loading {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 28px 36px;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            text-align: center;
+            z-index: 2000;
+        }
+        .loading.hidden { display: none; }
+        .loading-spinner {
+            width: 36px; height: 36px;
+            border: 3px solid #f0f0f0;
+            border-top-color: #FEE500;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 14px;
+        }
+        .loading-text { font-size: 14px; color: #666; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* 리스트 뷰 */
+        .list-view {
+            position: fixed;
+            top: 122px; left: 12px; right: 12px; bottom: 90px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            overflow-y: auto;
+            z-index: 800;
+            display: none;
+            flex-direction: column;
+        }
+        .list-view.active { display: flex; }
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            flex-shrink: 0;
+        }
+        .list-header h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        .list-close {
+            width: 32px; height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .list-close:hover { background: #eee; }
+        .list-close svg { width: 18px; height: 18px; color: #666; }
+        .list-content {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .list-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .list-item:hover { background: #fafafa; }
+        .list-item:active { background: #f5f5f5; }
+        .list-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .list-item-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+            flex: 1;
+        }
+        .list-item-address {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+        .list-item-info {
+            display: flex;
+            gap: 16px;
+            font-size: 13px;
+        }
+        .list-item-info span { color: #888; }
+        .list-item-info strong { color: #333; font-weight: 600; }
+        .grade-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .grade-badge.s-plus { background: #7c3aed; color: #fff; }
+        .grade-badge.s { background: #a855f7; color: #fff; }
+        .grade-badge.a-plus { background: #ef4444; color: #fff; }
+        .grade-badge.a { background: #3b82f6; color: #fff; }
+        .grade-badge.b { background: #22c55e; color: #fff; }
+
+        /* 토스트 */
+        .toast {
+            position: fixed;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 14px;
+            opacity: 0;
+            transition: all 0.3s;
+            z-index: 3000;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 주변 업체 검색 바 */
+        .place-search-bar {
+            position: fixed;
+            top: 122px; left: 12px; right: 12px;
+            z-index: 900;
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .place-search-bar.active { display: flex; }
+        .place-search-input-wrap {
+            display: flex;
+            gap: 8px;
+        }
+        .place-search-input {
+            flex: 1;
+            height: 44px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 10px;
+            background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            font-size: 14px;
+            outline: none;
+        }
+        .place-search-input::placeholder { color: #999; }
+        .place-search-btn {
+            width: 44px; height: 44px;
+            background: #FEE500;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .place-search-btn svg { width: 20px; height: 20px; }
+        .place-category-chips {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            padding: 2px 0;
+            -webkit-overflow-scrolling: touch;
+        }
+        .place-category-chips::-webkit-scrollbar { display: none; }
+        .place-category-chip {
+            padding: 6px 12px;
+            border-radius: 16px;
+            border: 1px solid #ddd;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+        .place-category-chip:hover { border-color: #bbb; }
+        .place-category-chip.active {
+            background: #3b82f6;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+
+        /* 주변 업체 검색 결과 패널 */
+        .place-result-panel {
+            position: fixed;
+            bottom: 0; left: 0; right: 0;
+            background: #fff;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-height: 55vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .place-result-panel.open { transform: translateY(0); }
+        .place-result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            flex-shrink: 0;
+        }
+        .place-result-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .place-result-header h3 span { color: #3b82f6; }
+        .place-result-close {
+            width: 32px; height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f5f5f5;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .place-result-close svg { width: 18px; height: 18px; color: #666; }
+        .place-result-list {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: max(16px, env(safe-area-inset-bottom));
+        }
+        .place-item {
+            padding: 14px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .place-item:hover { background: #fafafa; }
+        .place-item:active { background: #f5f5f5; }
+        .place-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+        .place-item-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1a1a;
+            flex: 1;
+        }
+        .place-item-category {
+            font-size: 12px;
+            color: #888;
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+        .place-item-address {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .place-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .place-action-btn {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.15s;
+        }
+        .place-action-btn svg { width: 16px; height: 16px; }
+        .place-action-btn.call {
+            background: #22c55e;
+            color: #fff;
+        }
+        .place-action-btn.call:hover { background: #16a34a; }
+        .place-action-btn.call:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .place-action-btn.direction {
+            background: #f0f0f0;
+            color: #333;
+        }
+        .place-action-btn.direction:hover { background: #e5e5e5; }
+        .place-no-result {
+            padding: 40px 20px;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+
+        /* 고정 버튼 활성화 상태 */
+        .float-btn.locked {
+            background: #ef4444;
+        }
+        .float-btn.locked svg { color: #fff; }
+
+        /* 반응형 - 태블릿 이상 */
+        @media (min-width: 768px) {
+            .info-grid { grid-template-columns: repeat(4, 1fr); }
+            .info-panel { max-width: 500px; left: 50%; transform: translateX(-50%) translateY(100%); }
+            .info-panel.open { transform: translateX(-50%) translateY(0); }
+            .filter-panel { max-width: 500px; left: 50%; transform: translateX(-50%) translateY(100%); }
+            .filter-panel.open { transform: translateX(-50%) translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>설치현황</h1>
+        <button class="header-btn" onclick="openFilter()" aria-label="필터">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="4" y1="6" x2="20" y2="6"></line>
+                <line x1="4" y1="12" x2="20" y2="12"></line>
+                <line x1="4" y1="18" x2="20" y2="18"></line>
+            </svg>
+        </button>
+    </header>
+
+    <div class="search-bar">
+        <span class="search-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+        </span>
+        <input type="text" class="search-input" placeholder="아파트, 장소, 업체명 검색" id="searchInput">
+        <button class="search-clear" id="searchClear" onclick="clearSearch()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+        </button>
+        <!-- 통합 검색 결과 드롭다운 -->
+        <div class="search-dropdown" id="searchDropdown">
+            <div class="search-dropdown-section" id="apartmentResults">
+                <div class="search-dropdown-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="3" y1="9" x2="21" y2="9"></line>
+                        <line x1="9" y1="21" x2="9" y2="9"></line>
+                    </svg>
+                    설치 아파트
+                </div>
+                <div class="search-dropdown-list" id="apartmentResultList"></div>
+            </div>
+            <div class="search-dropdown-section" id="kakaoResults">
+                <div class="search-dropdown-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    카카오맵 검색
+                </div>
+                <div class="search-dropdown-list" id="kakaoResultList"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+    <div class="list-view" id="listView">
+        <div class="list-header">
+            <h3>목록 <span id="listCount">0</span>개</h3>
+            <button class="list-close" onclick="toggleView()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="list-content" id="listContent"></div>
+    </div>
+
+    <!-- 주변 업체 검색 바 -->
+    <div class="place-search-bar" id="placeSearchBar">
+        <div class="place-search-input-wrap">
+            <input type="text" class="place-search-input" placeholder="주변 업체 검색 (예: 식당, 병원, 학원)" id="placeSearchInput">
+            <button class="place-search-btn" onclick="searchPlaces()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="place-category-chips">
+            <button class="place-category-chip" data-keyword="음식점">음식점</button>
+            <button class="place-category-chip" data-keyword="카페">카페</button>
+            <button class="place-category-chip" data-keyword="편의점">편의점</button>
+            <button class="place-category-chip" data-keyword="병원">병원</button>
+            <button class="place-category-chip" data-keyword="약국">약국</button>
+            <button class="place-category-chip" data-keyword="학원">학원</button>
+            <button class="place-category-chip" data-keyword="은행">은행</button>
+            <button class="place-category-chip" data-keyword="주유소">주유소</button>
+        </div>
+    </div>
+
+    <div class="floating-btns">
+        <button class="float-btn" onclick="togglePlaceSearch()" id="placeSearchToggle" aria-label="주변 업체 검색">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+            </svg>
+        </button>
+        <button class="float-btn" onclick="toggleMapLock()" id="mapLockBtn" aria-label="화면 고정">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" id="lockIcon">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+        </button>
+        <button class="float-btn" onclick="toggleView()" id="viewToggle" aria-label="리스트 보기">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="8" y1="6" x2="21" y2="6"></line>
+                <line x1="8" y1="12" x2="21" y2="12"></line>
+                <line x1="8" y1="18" x2="21" y2="18"></line>
+                <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+        </button>
+        <button class="float-btn" onclick="moveToMyLocation()" aria-label="내 위치">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 2v4m0 12v4m10-10h-4M6 12H2"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div class="stats-badge">
+        <strong id="visibleCount">0</strong>개 표시
+    </div>
+
+    <div class="overlay" onclick="closeAllPanels()"></div>
+
+    <div class="filter-panel" id="filterPanel">
+        <div class="filter-header">
+            <h2>필터</h2>
+            <button class="filter-reset" onclick="resetFilter()">초기화</button>
+            <button class="filter-close" onclick="closeFilter()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="filter-section">
+            <h3>리스트 구분</h3>
+            <div class="filter-chips" id="mediaFilter">
+                <button class="filter-chip active" data-value="all">전체</button>
+                <button class="filter-chip" data-value="list1">리스트1</button>
+                <button class="filter-chip" data-value="list2">리스트2</button>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h3>판매등급</h3>
+            <div class="filter-chips" id="gradeFilter">
+                <button class="filter-chip active" data-value="all">전체</button>
+                <button class="filter-chip" data-value="S+">S+</button>
+                <button class="filter-chip" data-value="S">S</button>
+                <button class="filter-chip" data-value="A+">A+</button>
+                <button class="filter-chip" data-value="A">A</button>
+                <button class="filter-chip" data-value="B">B</button>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h3>건물유형</h3>
+            <div class="filter-chips" id="typeFilter">
+                <button class="filter-chip active" data-value="all">전체</button>
+                <button class="filter-chip" data-value="아파트">아파트</button>
+                <button class="filter-chip" data-value="오피스텔">오피스텔</button>
+                <button class="filter-chip" data-value="주상복합">주상복합</button>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h3>지역</h3>
+            <div class="filter-chips" id="guFilter">
+                <button class="filter-chip active" data-value="all">전체</button>
+            </div>
+        </div>
+        <div class="filter-section">
+            <h3>설치시기</h3>
+            <div class="filter-chips" id="installFilter">
+                <button class="filter-chip active" data-value="all">전체</button>
+                <button class="filter-chip" data-value="2025">2025년</button>
+                <button class="filter-chip" data-value="2024">2024년</button>
+                <button class="filter-chip" data-value="2023">2023년</button>
+                <button class="filter-chip" data-value="2022">2022년</button>
+                <button class="filter-chip" data-value="2021">2021년</button>
+                <button class="filter-chip" data-value="2020">2020년</button>
+                <button class="filter-chip" data-value="older">2019년 이전</button>
+                <button class="filter-chip" data-value="none">미설치</button>
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button class="filter-apply" onclick="applyFilter()">필터 적용</button>
+        </div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+        <div class="info-handle"></div>
+        <div class="info-content">
+            <div class="info-header">
+                <div class="info-name" id="infoName">-</div>
+                <span class="info-grade-badge" id="infoGradeBadge">-</span>
+            </div>
+            <div class="info-address" id="infoAddress">-</div>
+            <!-- 영업제한 업종 섹션 -->
+            <div class="restriction-section" id="restrictionSection" style="display: none;">
+                <div class="restriction-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    영업제한 업종
+                </div>
+                <div class="restriction-items" id="restrictionItems">
+                </div>
+            </div>
+            <!-- HT POST 비고 섹션 -->
+            <div class="note-section" id="noteSection" style="display: none;">
+                <div class="note-title">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                    </svg>
+                    <span id="noteContent"></span>
+                </div>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">세대수</div>
+                    <div class="info-value" id="infoHouseholds">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">인구수</div>
+                    <div class="info-value" id="infoPopulation">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">층수</div>
+                    <div class="info-value" id="infoFloors">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">평형</div>
+                    <div class="info-value" id="infoArea">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">수량</div>
+                    <div class="info-value" id="infoQuantity">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">대당가</div>
+                    <div class="info-value" id="infoUnitPrice">-</div>
+                </div>
+                <div class="info-item" id="commissionItem">
+                    <div class="info-label">추가 수수료</div>
+                    <div class="info-value" id="infoCommission" style="color:#ef4444;">-</div>
+                </div>
+                <div class="info-item" onclick="showPriceDetail()" id="priceItem">
+                    <div class="info-label">4주 금액</div>
+                    <div class="info-value price-clickable" id="infoPrice" style="font-size:16px; color:#3b82f6;">-</div>
+                </div>
+            </div>
+            <div class="info-actions">
+                <button class="info-btn secondary" onclick="copyAddress()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    주소복사
+                </button>
+                <button class="info-btn secondary" onclick="openKakaoMapDetail()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    카카오맵
+                </button>
+                <button class="info-btn primary" onclick="openKakaoMap()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                    </svg>
+                    길찾기
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading" id="loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">데이터 불러오는 중...</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- 금액 상세 모달 -->
+    <div class="price-overlay" id="priceOverlay" onclick="closePriceModal()"></div>
+    <div class="price-modal" id="priceModal">
+        <div class="price-modal-header">
+            <span class="price-modal-title">광고 금액 안내</span>
+            <button class="price-modal-close" onclick="closePriceModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="price-item">
+            <span class="price-period">4주</span>
+            <span class="price-amount" id="price4week">-</span>
+        </div>
+        <div class="price-item">
+            <span class="price-period">24주<span class="price-discount">5% 할인</span></span>
+            <span class="price-amount" id="price24week">-</span>
+        </div>
+        <div class="price-item">
+            <span class="price-period">48주<span class="price-discount">10% 할인</span></span>
+            <span class="price-amount" id="price48week">-</span>
+        </div>
+        <div class="price-vat">※ 부가세 별도</div>
+    </div>
+
+    <!-- 주변 업체 검색 결과 패널 -->
+    <div class="place-result-panel" id="placeResultPanel">
+        <div class="place-result-header">
+            <h3>검색 결과 <span id="placeResultCount">0</span>건</h3>
+            <button class="place-result-close" onclick="closePlaceResult()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="place-result-list" id="placeResultList"></div>
+    </div>
+
+    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=40a7fdd99c590f478a37a9071c0fb69a&libraries=services,clusterer,drawing&autoload=false"></script>
+
+    <script>
+        let map;
+        let markers = [];
+        let locations = [];
+        let filteredLocations = [];
+        let selectedLocation = null;
+        let isListView = false;
+        let geocoder;
+        let currentFilters = { media: ['all'], grade: ['all'], type: ['all'], gu: ['all'], install: ['all'], search: '' };
+
+        // 새로운 기능 변수
+        let isMapLocked = false;
+        let isPlaceSearchOpen = false;
+        let places;  // 카카오 장소 검색 객체
+        let placeMarkers = [];  // 주변 업체 마커들
+
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadData();
+            kakao.maps.load(function() {
+                initMap();
+                initSearch();
+                initFilterChips();
+            });
+        });
+
+        async function loadData() {
+            try {
+                const response = await fetch('data.json');
+                locations = await response.json();
+                loadSavedCoordinates();
+                filteredLocations = [...locations];
+
+                const guSet = new Set();
+                locations.forEach(loc => { if (loc.gu) guSet.add(loc.gu); });
+
+                const guFilter = document.getElementById('guFilter');
+                Array.from(guSet).sort().forEach(gu => {
+                    const chip = document.createElement('button');
+                    chip.className = 'filter-chip';
+                    chip.dataset.value = gu;
+                    chip.textContent = gu.replace(/시\s/g, '');
+                    chip.onclick = () => toggleChip(chip, 'guFilter');
+                    guFilter.appendChild(chip);
+                });
+
+                document.getElementById('visibleCount').textContent = locations.length.toLocaleString();
+            } catch (e) {
+                console.error('데이터 로드 실패:', e);
+            }
+        }
+
+        function initMap() {
+            document.getElementById('loadingText').textContent = '지도 불러오는 중...';
+            const container = document.getElementById('map');
+            const options = {
+                center: new kakao.maps.LatLng(37.5665, 126.9780),
+                level: 8
+            };
+            map = new kakao.maps.Map(container, options);
+            geocoder = new kakao.maps.services.Geocoder();
+            places = new kakao.maps.services.Places(map);  // 장소 검색 객체 초기화
+            kakao.maps.event.addListener(map, 'click', closeInfoPanel);
+            geocodeAndCreateMarkers();
+            initPlaceSearch();  // 주변 업체 검색 초기화
+        }
+
+        async function geocodeAndCreateMarkers() {
+            let processed = 0;
+            let success = 0;
+            const total = filteredLocations.length;
+
+            for (let loc of filteredLocations) {
+                if (loc.lat && loc.lng) {
+                    success++;
+                    processed++;
+                    continue;
+                }
+
+                await new Promise((resolve) => {
+                    geocoder.addressSearch(loc.address, (result, status) => {
+                        if (status === kakao.maps.services.Status.OK) {
+                            loc.lat = parseFloat(result[0].y);
+                            loc.lng = parseFloat(result[0].x);
+                            success++;
+                        }
+                        processed++;
+                        if (processed % 100 === 0 || processed === total) {
+                            document.getElementById('loadingText').textContent = `주소 변환 중... (${processed}/${total})`;
+                        }
+                        resolve();
+                    });
+                });
+                await new Promise(r => setTimeout(r, 50));
+            }
+
+            // 좌표 저장 후 오프셋 적용하여 마커 생성
+            saveCoordinates();
+            createMarkersWithOffset(filteredLocations);
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('visibleCount').textContent = success.toLocaleString();
+            updateListView();
+        }
+
+        // 같은 위치의 마커들에 오프셋 적용
+        function createMarkersWithOffset(locs) {
+            // 좌표별로 그룹화 (소수점 4자리까지 같으면 같은 위치로 판단)
+            const coordGroups = {};
+            locs.forEach(loc => {
+                if (!loc.lat || !loc.lng) return;
+                const key = `${loc.lat.toFixed(4)}_${loc.lng.toFixed(4)}`;
+                if (!coordGroups[key]) coordGroups[key] = [];
+                coordGroups[key].push(loc);
+            });
+
+            // 각 그룹에 오프셋 적용하여 마커 생성
+            const offset = 0.00015; // 약 15m
+            Object.values(coordGroups).forEach(group => {
+                if (group.length === 1) {
+                    // 단일 마커는 그대로
+                    createMarker(group[0]);
+                } else {
+                    // 여러 마커가 겹치면 오프셋 적용
+                    const angleStep = (2 * Math.PI) / group.length;
+                    group.forEach((loc, idx) => {
+                        const angle = angleStep * idx - Math.PI / 2; // 위쪽부터 시작
+                        const offsetLat = loc.lat + offset * Math.cos(angle);
+                        const offsetLng = loc.lng + offset * Math.sin(angle);
+                        createMarker(loc, offsetLat, offsetLng);
+                    });
+                }
+            });
+        }
+
+        function createMarker(loc, offsetLat, offsetLng) {
+            if (!loc.lat || !loc.lng) return;
+            // 오프셋이 있으면 사용, 없으면 원래 좌표 사용
+            const lat = offsetLat !== undefined ? offsetLat : loc.lat;
+            const lng = offsetLng !== undefined ? offsetLng : loc.lng;
+            const markerPosition = new kakao.maps.LatLng(lat, lng);
+
+            // 타입에 따라 다른 마커 이미지 사용
+            let markerImage = null;
+            if (loc.type === 'townboard') {
+                // 타운보드 만첨: 노란색 별 마커
+                const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+                const imageSize = new kakao.maps.Size(24, 35);
+                markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+            } else if (loc.type === 'townboard_op') {
+                // 타운보드 가동: 빨간색 별 마커
+                const imageSrc = 'data:image/svg+xml;base64,' + btoa(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="35" viewBox="0 0 24 35">
+                        <path d="M12 0C5.4 0 0 5.4 0 12c0 7.5 12 23 12 23s12-15.5 12-23C24 5.4 18.6 0 12 0z" fill="#e74c3c"/>
+                        <circle cx="12" cy="12" r="6" fill="white"/>
+                    </svg>
+                `);
+                const imageSize = new kakao.maps.Size(24, 35);
+                markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+            } else if (loc.type === 'htpost') {
+                // HT POST: 주황색 마커
+                const imageSrc = 'data:image/svg+xml;base64,' + btoa(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="35" viewBox="0 0 24 35">
+                        <path d="M12 0C5.4 0 0 5.4 0 12c0 7.5 12 23 12 23s12-15.5 12-23C24 5.4 18.6 0 12 0z" fill="#f97316"/>
+                        <circle cx="12" cy="12" r="6" fill="white"/>
+                    </svg>
+                `);
+                const imageSize = new kakao.maps.Size(24, 35);
+                markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+            }
+            // 포커스미디어: 기본 마커 (파란색)
+
+            const marker = new kakao.maps.Marker({
+                position: markerPosition,
+                map: map,
+                image: markerImage
+            });
+            kakao.maps.event.addListener(marker, 'click', function() {
+                showInfo(loc);
+                map.setCenter(markerPosition);
+                map.setLevel(3);
+            });
+            markers.push({ marker, data: loc });
+        }
+
+        function saveCoordinates() {
+            try {
+                const coordsMap = {};
+                locations.forEach(l => {
+                    if (l.lat && l.lng) coordsMap[l.name] = { lat: l.lat, lng: l.lng };
+                });
+                localStorage.setItem('elevator_coords', JSON.stringify(coordsMap));
+            } catch(e) {}
+        }
+
+        function loadSavedCoordinates() {
+            try {
+                const saved = localStorage.getItem('elevator_coords');
+                if (saved) {
+                    const coordsMap = JSON.parse(saved);
+                    locations.forEach(loc => {
+                        if (!loc.lat && !loc.lng && coordsMap[loc.name]) {
+                            loc.lat = coordsMap[loc.name].lat;
+                            loc.lng = coordsMap[loc.name].lng;
+                        }
+                    });
+                }
+            } catch(e) {}
+        }
+
+        function getGradeClass(grade) {
+            if (grade === 'S+') return 's-plus';
+            if (grade === 'S') return 's';
+            if (grade === 'A+') return 'a-plus';
+            if (grade === 'A') return 'a';
+            if (grade === 'B') return 'b';
+            return '';
+        }
+
+        function showInfo(loc) {
+            selectedLocation = loc;
+
+            // 수수료율에 따른 테두리 색상 적용
+            const infoPanel = document.getElementById('infoPanel');
+            infoPanel.classList.remove('commission-10', 'commission-15');
+            if (loc.commission_rate === 0.1) {
+                infoPanel.classList.add('commission-10');
+            } else if (loc.commission_rate === 0.15) {
+                infoPanel.classList.add('commission-15');
+            }
+
+            document.getElementById('infoName').textContent = loc.name;
+            document.getElementById('infoAddress').textContent = loc.address;
+
+            // 타운보드 또는 HT POST 여부 확인
+            const isTownboard = loc.type === 'townboard' || loc.type === 'townboard_op';
+            const isHtpost = loc.type === 'htpost';
+
+            const badge = document.getElementById('infoGradeBadge');
+            badge.style.background = '';  // 인라인 스타일 초기화
+            badge.style.color = '';
+
+            if (isHtpost) {
+                badge.textContent = 'HT POST';
+                badge.className = 'info-grade-badge';
+                badge.style.background = '#f97316';
+                badge.style.color = '#fff';
+            } else {
+                badge.textContent = loc.grade || '-';
+                badge.className = 'info-grade-badge ' + getGradeClass(loc.grade);
+            }
+
+            // 아파트 정보 항목들 다시 표시
+            document.querySelectorAll('.info-grid .info-item').forEach(el => el.style.display = '');
+
+            document.getElementById('infoHouseholds').textContent = loc.households ? loc.households.toLocaleString() : '-';
+            document.getElementById('infoPopulation').textContent = loc.population ? loc.population.toLocaleString() : '-';
+            document.getElementById('infoFloors').textContent = loc.floors ? loc.floors + 'F' : '-';
+            document.getElementById('infoArea').textContent = loc.area ? (typeof loc.area === 'number' ? loc.area + '평' : loc.area) : '-';
+            document.getElementById('infoQuantity').textContent = loc.quantity ? loc.quantity + '대' : '-';
+
+            // 추가 수수료율 항목 숨김 (테두리 색상으로만 표시)
+            document.getElementById('commissionItem').style.display = 'none';
+
+            // 타운보드는 대당가, 4주 금액 숨김
+            const unitPriceItem = document.getElementById('infoUnitPrice').parentElement;
+            const priceItem = document.getElementById('priceItem');
+
+            if (isTownboard) {
+                unitPriceItem.style.display = 'none';
+                priceItem.style.display = 'none';
+            } else if (isHtpost) {
+                // HT POST: 대당가 숨기고, 월금액으로 표시
+                unitPriceItem.style.display = 'none';
+                priceItem.style.display = '';
+                document.getElementById('infoPrice').parentElement.querySelector('.info-label').textContent = '월 금액';
+                document.getElementById('infoPrice').textContent = loc.price_4w ? loc.price_4w.toLocaleString() + '원' : '-';
+            } else {
+                unitPriceItem.style.display = '';
+                priceItem.style.display = '';
+                document.getElementById('infoPrice').parentElement.querySelector('.info-label').textContent = '4주 금액';
+                document.getElementById('infoUnitPrice').textContent = loc.unit_price ? loc.unit_price.toLocaleString() : '-';
+                document.getElementById('infoPrice').textContent = loc.price_4w ? loc.price_4w.toLocaleString() + '원' : '-';
+            }
+
+            // 금액 상세 모달용 4주 금액 저장
+            currentPrice4week = loc.price_4w || 0;
+
+            // 영업제한 업종 표시
+            const restrictionSection = document.getElementById('restrictionSection');
+            const restrictionItems = document.getElementById('restrictionItems');
+            const hasRestriction1 = loc.restriction1_type && loc.restriction1_type.trim();
+            const hasRestriction2 = loc.restriction2_type && loc.restriction2_type.trim();
+
+            if (hasRestriction1 || hasRestriction2) {
+                restrictionSection.style.display = 'block';
+                let itemsHtml = '';
+
+                if (hasRestriction1) {
+                    const date1 = loc.restriction1_date ? `(~${loc.restriction1_date})` : '';
+                    itemsHtml += `
+                        <div class="restriction-item">
+                            <span class="restriction-label">구좌1</span>
+                            <span>
+                                <span class="restriction-value">${loc.restriction1_type}</span>
+                                <span class="restriction-date">${date1}</span>
+                            </span>
+                        </div>
+                    `;
+                }
+
+                if (hasRestriction2) {
+                    const date2 = loc.restriction2_date ? `(~${loc.restriction2_date})` : '';
+                    itemsHtml += `
+                        <div class="restriction-item">
+                            <span class="restriction-label">구좌2</span>
+                            <span>
+                                <span class="restriction-value">${loc.restriction2_type}</span>
+                                <span class="restriction-date">${date2}</span>
+                            </span>
+                        </div>
+                    `;
+                }
+
+                restrictionItems.innerHTML = itemsHtml;
+            } else {
+                restrictionSection.style.display = 'none';
+            }
+
+            // HT POST 비고 정보 표시
+            const noteSection = document.getElementById('noteSection');
+            const noteContent = document.getElementById('noteContent');
+            const hasNote = loc.note && loc.note.trim() && loc.note !== 'nan' && loc.note !== 'NaN';
+
+            if (hasNote) {
+                noteSection.style.display = 'block';
+                noteContent.textContent = loc.note;
+
+                // 특정 키워드에 따른 스타일 변경
+                if (loc.note.includes('설치 이슈') || loc.note.includes('판매 불가')) {
+                    noteSection.classList.add('warning');
+                } else {
+                    noteSection.classList.remove('warning');
+                }
+            } else {
+                noteSection.style.display = 'none';
+            }
+
+            document.getElementById('infoPanel').classList.add('open');
+            document.querySelector('.overlay').classList.add('active');
+        }
+
+        function initSearch() {
+            const input = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('searchClear');
+            const dropdown = document.getElementById('searchDropdown');
+            let timer;
+            let kakaoTimer;
+
+            input.addEventListener('input', function() {
+                const query = this.value.trim();
+                clearBtn.classList.toggle('show', query.length > 0);
+
+                clearTimeout(timer);
+                clearTimeout(kakaoTimer);
+
+                if (query.length < 2) {
+                    dropdown.classList.remove('show');
+                    currentFilters.search = '';
+                    applyFilterLogic();
+                    return;
+                }
+
+                timer = setTimeout(() => {
+                    // 아파트 검색
+                    searchApartments(query);
+                    // 카카오맵 검색
+                    kakaoTimer = setTimeout(() => {
+                        searchKakaoPlaces(query);
+                    }, 100);
+                }, 300);
+            });
+
+            input.addEventListener('focus', function() {
+                if (this.value.trim().length >= 2) {
+                    dropdown.classList.add('show');
+                }
+            });
+
+            // 드롭다운 외부 클릭 시 닫기
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.search-bar')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+
+            // Enter 키로 카카오맵 검색
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    const query = this.value.trim();
+                    if (query.length >= 2) {
+                        searchKakaoPlaces(query, true);
+                    }
+                }
+            });
+        }
+
+        function searchApartments(query) {
+            const q = query.toLowerCase();
+            const results = locations.filter(d =>
+                d.name?.toLowerCase().includes(q) ||
+                d.address?.toLowerCase().includes(q) ||
+                d.dong?.toLowerCase().includes(q)
+            ).slice(0, 5);
+
+            const listEl = document.getElementById('apartmentResultList');
+            const sectionEl = document.getElementById('apartmentResults');
+
+            if (results.length === 0) {
+                sectionEl.style.display = 'none';
+            } else {
+                sectionEl.style.display = 'block';
+                listEl.innerHTML = results.map(loc => {
+                    let typeName = '포커스';
+                    let badgeStyle = 'apt';
+                    if (loc.type === 'townboard' || loc.type === 'townboard_op') {
+                        typeName = '타운보드';
+                    } else if (loc.type === 'htpost') {
+                        typeName = 'HT POST';
+                        badgeStyle = 'htpost';
+                    }
+                    return `
+                    <div class="search-dropdown-item" onclick="selectApartment('${loc.name}')">
+                        <div class="search-dropdown-item-name">
+                            ${loc.name}
+                            <span class="search-dropdown-item-badge ${badgeStyle}">${typeName}</span>
+                        </div>
+                        <div class="search-dropdown-item-address">${loc.address}</div>
+                    </div>
+                `}).join('');
+            }
+
+            document.getElementById('searchDropdown').classList.add('show');
+        }
+
+        function searchKakaoPlaces(query, moveToFirst = false) {
+            const listEl = document.getElementById('kakaoResultList');
+            const sectionEl = document.getElementById('kakaoResults');
+
+            listEl.innerHTML = '<div class="search-dropdown-loading">검색 중...</div>';
+            sectionEl.style.display = 'block';
+
+            places.keywordSearch(query, function(data, status) {
+                if (status === kakao.maps.services.Status.OK) {
+                    if (moveToFirst && data.length > 0) {
+                        // Enter 키로 검색 시 첫 번째 결과로 이동
+                        selectKakaoPlace(data[0]);
+                        return;
+                    }
+
+                    listEl.innerHTML = data.slice(0, 5).map((place, i) => `
+                        <div class="search-dropdown-item" onclick="selectKakaoPlaceByIndex(${i}, '${query}')">
+                            <div class="search-dropdown-item-name">
+                                ${place.place_name}
+                                <span class="search-dropdown-item-badge place">${place.category_group_name || '장소'}</span>
+                            </div>
+                            <div class="search-dropdown-item-address">${place.road_address_name || place.address_name}</div>
+                        </div>
+                    `).join('');
+
+                    // 검색 결과 임시 저장
+                    window.lastKakaoResults = data.slice(0, 5);
+                } else {
+                    listEl.innerHTML = '<div class="search-dropdown-empty">카카오맵 검색 결과 없음</div>';
+                }
+            });
+        }
+
+        function selectApartment(name) {
+            const loc = locations.find(l => l.name === name);
+            if (loc) {
+                document.getElementById('searchDropdown').classList.remove('show');
+                document.getElementById('searchInput').value = loc.name;
+
+                if (loc.lat && loc.lng) {
+                    map.setCenter(new kakao.maps.LatLng(loc.lat, loc.lng));
+                    map.setLevel(3);
+                }
+                showInfo(loc);
+            }
+        }
+
+        function selectKakaoPlaceByIndex(index, query) {
+            if (window.lastKakaoResults && window.lastKakaoResults[index]) {
+                selectKakaoPlace(window.lastKakaoResults[index]);
+            }
+        }
+
+        function selectKakaoPlace(place) {
+            document.getElementById('searchDropdown').classList.remove('show');
+            document.getElementById('searchInput').value = place.place_name;
+
+            const position = new kakao.maps.LatLng(place.y, place.x);
+            map.setCenter(position);
+            map.setLevel(3);
+
+            // 선택한 장소에 마커 표시
+            clearPlaceMarkers();
+            const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+            const imageSize = new kakao.maps.Size(24, 35);
+            const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+
+            const marker = new kakao.maps.Marker({
+                map: map,
+                position: position,
+                image: markerImage
+            });
+            placeMarkers.push(marker);
+
+            // 장소 정보 표시
+            showKakaoPlaceInfo(place);
+        }
+
+        function showKakaoPlaceInfo(place) {
+            // 카카오맵 장소 정보를 info-panel에 표시
+            selectedLocation = {
+                name: place.place_name,
+                address: place.road_address_name || place.address_name,
+                lat: parseFloat(place.y),
+                lng: parseFloat(place.x),
+                phone: place.phone,
+                category: place.category_group_name,
+                place_url: place.place_url,
+                isKakaoPlace: true
+            };
+
+            document.getElementById('infoName').textContent = place.place_name;
+            document.getElementById('infoAddress').textContent = place.road_address_name || place.address_name;
+
+            const badge = document.getElementById('infoGradeBadge');
+            badge.textContent = place.category_group_name || '장소';
+            badge.className = 'info-grade-badge';
+            badge.style.background = '#22c55e';
+            badge.style.color = '#fff';
+
+            // 아파트 정보는 숨기기
+            document.getElementById('restrictionSection').style.display = 'none';
+            document.querySelectorAll('.info-grid .info-item').forEach(el => el.style.display = 'none');
+
+            document.getElementById('infoPanel').classList.add('open');
+            document.querySelector('.overlay').classList.add('active');
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            document.getElementById('searchClear').classList.remove('show');
+            document.getElementById('searchDropdown').classList.remove('show');
+            currentFilters.search = '';
+            applyFilterLogic();
+            clearPlaceMarkers();
+            input.focus();
+        }
+
+        function initFilterChips() {
+            document.querySelectorAll('.filter-chips').forEach(container => {
+                container.querySelectorAll('.filter-chip').forEach(chip => {
+                    chip.onclick = () => toggleChip(chip, container.id);
+                });
+            });
+        }
+
+        function toggleChip(chip, containerId) {
+            const container = document.getElementById(containerId);
+            const allChip = container.querySelector('[data-value="all"]');
+            const isAll = chip.dataset.value === 'all';
+
+            if (isAll) {
+                // "전체" 클릭 시 다른 선택 해제
+                container.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+            } else {
+                // 다른 항목 클릭 시
+                allChip.classList.remove('active');
+                chip.classList.toggle('active');
+
+                // 아무것도 선택 안되면 "전체" 활성화
+                const activeChips = container.querySelectorAll('.filter-chip.active');
+                if (activeChips.length === 0) {
+                    allChip.classList.add('active');
+                }
+            }
+        }
+
+        function resetFilter() {
+            document.querySelectorAll('.filter-chips').forEach(container => {
+                container.querySelectorAll('.filter-chip').forEach((c, i) => {
+                    c.classList.toggle('active', i === 0);
+                });
+            });
+        }
+
+        function getSelectedValues(containerId) {
+            const chips = document.querySelectorAll(`#${containerId} .filter-chip.active`);
+            return Array.from(chips).map(c => c.dataset.value);
+        }
+
+        function applyFilter() {
+            currentFilters.media = getSelectedValues('mediaFilter');
+            currentFilters.grade = getSelectedValues('gradeFilter');
+            currentFilters.type = getSelectedValues('typeFilter');
+            currentFilters.gu = getSelectedValues('guFilter');
+            currentFilters.install = getSelectedValues('installFilter');
+            applyFilterLogic();
+            closeFilter();
+        }
+
+        function applyFilterLogic() {
+            markers.forEach(m => m.marker.setMap(null));
+            markers = [];
+
+            filteredLocations = locations.filter(d => {
+                // 매체 구분 필터 (다중 선택)
+                if (!currentFilters.media.includes('all') && !currentFilters.media.includes(d.type)) return false;
+
+                // 등급 필터 (다중 선택)
+                if (!currentFilters.grade.includes('all') && !currentFilters.grade.includes(d.grade)) return false;
+
+                // 건물유형 필터 (다중 선택)
+                if (!currentFilters.type.includes('all') && !currentFilters.type.includes(d.building_type)) return false;
+
+                // 지역 필터 (다중 선택)
+                if (!currentFilters.gu.includes('all') && !currentFilters.gu.includes(d.gu)) return false;
+
+                // 설치시기 필터 (다중 선택)
+                if (!currentFilters.install.includes('all')) {
+                    const installDate = d.install_date || '';
+                    const year = installDate.substring(0, 4);
+                    let matched = false;
+
+                    for (const filter of currentFilters.install) {
+                        if (filter === 'none' && !installDate) { matched = true; break; }
+                        if (filter === 'older' && installDate && parseInt(year) < 2020) { matched = true; break; }
+                        if (year === filter) { matched = true; break; }
+                    }
+                    if (!matched) return false;
+                }
+
+                // 검색어 필터
+                if (currentFilters.search) {
+                    const s = currentFilters.search;
+                    if (!(d.name?.toLowerCase().includes(s) || d.address?.toLowerCase().includes(s) || d.dong?.toLowerCase().includes(s))) return false;
+                }
+                return true;
+            });
+
+            let mapCount = 0;
+            let firstLoc = null;
+            filteredLocations.forEach(loc => {
+                if (loc.lat && loc.lng) {
+                    if (!firstLoc) firstLoc = loc;
+                    mapCount++;
+                }
+            });
+
+            // 오프셋 적용하여 마커 생성
+            createMarkersWithOffset(filteredLocations);
+
+            // 필터된 결과가 있으면 모든 마커가 보이도록 지도 범위 조정
+            if (firstLoc && !currentFilters.gu.includes('all')) {
+                const bounds = new kakao.maps.LatLngBounds();
+                filteredLocations.forEach(loc => {
+                    if (loc.lat && loc.lng) {
+                        bounds.extend(new kakao.maps.LatLng(loc.lat, loc.lng));
+                    }
+                });
+                map.setBounds(bounds);
+            }
+
+            document.getElementById('visibleCount').textContent = mapCount.toLocaleString();
+            updateListView();
+        }
+
+        function updateListView() {
+            const listContent = document.getElementById('listContent');
+            listContent.innerHTML = '';
+            document.getElementById('listCount').textContent = filteredLocations.length.toLocaleString();
+
+            filteredLocations.forEach(loc => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.onclick = () => {
+                    showInfo(loc);
+                    if (loc.lat && loc.lng) {
+                        map.setCenter(new kakao.maps.LatLng(loc.lat, loc.lng));
+                        map.setLevel(3);
+                    }
+                    if (isListView) toggleView();
+                };
+
+                item.innerHTML = `
+                    <div class="list-item-header">
+                        <span class="list-item-name">${loc.name}</span>
+                        <span class="grade-badge ${getGradeClass(loc.grade)}">${loc.grade || '-'}</span>
+                    </div>
+                    <div class="list-item-address">${loc.address}</div>
+                    <div class="list-item-info">
+                        <span>세대수 <strong>${loc.households?.toLocaleString() || '-'}</strong></span>
+                        <span>4주 <strong>${loc.price_4w?.toLocaleString() || '-'}원</strong></span>
+                    </div>
+                `;
+                listContent.appendChild(item);
+            });
+        }
+
+        function toggleView() {
+            isListView = !isListView;
+            document.getElementById('listView').classList.toggle('active', isListView);
+            document.getElementById('viewToggle').classList.toggle('active', isListView);
+        }
+
+        function moveToMyLocation() {
+            if (navigator.geolocation) {
+                showToast('위치를 찾는 중...');
+                navigator.geolocation.getCurrentPosition(
+                    pos => {
+                        const moveLatLng = new kakao.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+                        map.setCenter(moveLatLng);
+                        map.setLevel(4);
+                        showToast('현재 위치로 이동했습니다');
+                    },
+                    () => showToast('위치를 가져올 수 없습니다')
+                );
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        function copyAddress() {
+            if (selectedLocation) {
+                navigator.clipboard.writeText(selectedLocation.address);
+                showToast('주소가 복사되었습니다');
+            }
+        }
+
+        function openKakaoMap() {
+            if (selectedLocation) {
+                const addr = encodeURIComponent(selectedLocation.address);
+                if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                    window.location.href = `kakaomap://search?q=${addr}`;
+                    setTimeout(() => {
+                        window.open(`https://map.kakao.com/link/search/${addr}`, '_blank');
+                    }, 1000);
+                } else {
+                    window.open(`https://map.kakao.com/link/search/${addr}`, '_blank');
+                }
+            }
+        }
+
+        function openKakaoMapDetail() {
+            if (!selectedLocation) return;
+
+            // 카카오맵 장소인 경우 place_url 사용
+            if (selectedLocation.isKakaoPlace && selectedLocation.place_url) {
+                window.open(selectedLocation.place_url, '_blank');
+                return;
+            }
+
+            // 아파트인 경우 이름으로 검색
+            const query = encodeURIComponent(selectedLocation.name);
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                window.location.href = `kakaomap://search?q=${query}`;
+                setTimeout(() => {
+                    window.open(`https://map.kakao.com/link/search/${query}`, '_blank');
+                }, 1000);
+            } else {
+                window.open(`https://map.kakao.com/link/search/${query}`, '_blank');
+            }
+        }
+
+        function openFilter() {
+            document.getElementById('filterPanel').classList.add('open');
+            document.querySelector('.overlay').classList.add('active');
+        }
+
+        function closeFilter() {
+            document.getElementById('filterPanel').classList.remove('open');
+            document.querySelector('.overlay').classList.remove('active');
+        }
+
+        function closeInfoPanel() {
+            document.getElementById('infoPanel').classList.remove('open');
+            document.querySelector('.overlay').classList.remove('active');
+        }
+
+        function closeAllPanels() {
+            closeFilter();
+            closeInfoPanel();
+            closePlaceResult();
+        }
+
+        // ========== 지도 고정 기능 ==========
+        function toggleMapLock() {
+            isMapLocked = !isMapLocked;
+            const btn = document.getElementById('mapLockBtn');
+            const lockIcon = document.getElementById('lockIcon');
+
+            if (isMapLocked) {
+                // 지도 조작 비활성화
+                map.setDraggable(false);
+                map.setZoomable(false);
+                btn.classList.add('locked');
+                // 잠금 아이콘으로 변경
+                lockIcon.innerHTML = `
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    <circle cx="12" cy="16" r="1"></circle>
+                `;
+                showToast('화면이 고정되었습니다');
+            } else {
+                // 지도 조작 활성화
+                map.setDraggable(true);
+                map.setZoomable(true);
+                btn.classList.remove('locked');
+                // 열림 아이콘으로 변경
+                lockIcon.innerHTML = `
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                `;
+                showToast('화면 고정이 해제되었습니다');
+            }
+        }
+
+        // ========== 주변 업체 검색 기능 ==========
+        function initPlaceSearch() {
+            // 카테고리 칩 클릭 이벤트
+            document.querySelectorAll('.place-category-chip').forEach(chip => {
+                chip.addEventListener('click', function() {
+                    document.querySelectorAll('.place-category-chip').forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById('placeSearchInput').value = this.dataset.keyword;
+                    searchPlaces();
+                });
+            });
+
+            // 엔터키로 검색
+            document.getElementById('placeSearchInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchPlaces();
+                }
+            });
+        }
+
+        function togglePlaceSearch() {
+            isPlaceSearchOpen = !isPlaceSearchOpen;
+            const searchBar = document.getElementById('placeSearchBar');
+            const toggleBtn = document.getElementById('placeSearchToggle');
+
+            if (isPlaceSearchOpen) {
+                searchBar.classList.add('active');
+                toggleBtn.classList.add('active');
+                document.getElementById('placeSearchInput').focus();
+            } else {
+                searchBar.classList.remove('active');
+                toggleBtn.classList.remove('active');
+                closePlaceResult();
+                clearPlaceMarkers();
+            }
+        }
+
+        function searchPlaces() {
+            const keyword = document.getElementById('placeSearchInput').value.trim();
+            if (!keyword) {
+                showToast('검색어를 입력해주세요');
+                return;
+            }
+
+            // 현재 지도 중심 좌표 기준으로 검색
+            const center = map.getCenter();
+            const options = {
+                location: center,
+                radius: 2000,  // 반경 2km
+                sort: kakao.maps.services.SortBy.DISTANCE
+            };
+
+            showToast('검색 중...');
+            places.keywordSearch(keyword, placesSearchCallback, options);
+        }
+
+        function placesSearchCallback(data, status, pagination) {
+            if (status === kakao.maps.services.Status.OK) {
+                displayPlaceResults(data);
+                displayPlaceMarkers(data);
+            } else if (status === kakao.maps.services.Status.ZERO_RESULT) {
+                showToast('검색 결과가 없습니다');
+                document.getElementById('placeResultCount').textContent = '0';
+                document.getElementById('placeResultList').innerHTML = `
+                    <div class="place-no-result">
+                        현재 지도 주변에서 검색 결과를 찾을 수 없습니다.<br>
+                        지도를 이동한 후 다시 검색해보세요.
+                    </div>
+                `;
+                document.getElementById('placeResultPanel').classList.add('open');
+            } else {
+                showToast('검색 중 오류가 발생했습니다');
+            }
+        }
+
+        function displayPlaceResults(places) {
+            const listEl = document.getElementById('placeResultList');
+            listEl.innerHTML = '';
+            document.getElementById('placeResultCount').textContent = places.length;
+
+            places.forEach((place, index) => {
+                const item = document.createElement('div');
+                item.className = 'place-item';
+                item.onclick = () => moveToPlePlace(place);
+
+                const hasPhone = place.phone && place.phone.length > 0;
+
+                item.innerHTML = `
+                    <div class="place-item-header">
+                        <span class="place-item-name">${place.place_name}</span>
+                        <span class="place-item-category">${place.category_group_name || '기타'}</span>
+                    </div>
+                    <div class="place-item-address">${place.road_address_name || place.address_name}</div>
+                    <div class="place-item-actions">
+                        <button class="place-action-btn call" onclick="event.stopPropagation(); callPlace('${place.phone}')" ${!hasPhone ? 'disabled' : ''}>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                            </svg>
+                            ${hasPhone ? '전화' : '번호없음'}
+                        </button>
+                        <button class="place-action-btn direction" onclick="event.stopPropagation(); openPlaceDirection('${place.place_name}', ${place.y}, ${place.x})">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polygon points="3 11 22 2 13 21 11 13 3 11"></polygon>
+                            </svg>
+                            길찾기
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            });
+
+            document.getElementById('placeResultPanel').classList.add('open');
+        }
+
+        function displayPlaceMarkers(places) {
+            clearPlaceMarkers();
+
+            const imageSrc = 'https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png';
+            const imageSize = new kakao.maps.Size(24, 35);
+            const markerImage = new kakao.maps.MarkerImage(imageSrc, imageSize);
+
+            places.forEach((place, i) => {
+                const marker = new kakao.maps.Marker({
+                    map: map,
+                    position: new kakao.maps.LatLng(place.y, place.x),
+                    image: markerImage
+                });
+
+                kakao.maps.event.addListener(marker, 'click', function() {
+                    moveToPlePlace(place);
+                });
+
+                placeMarkers.push(marker);
+            });
+        }
+
+        function clearPlaceMarkers() {
+            placeMarkers.forEach(marker => marker.setMap(null));
+            placeMarkers = [];
+        }
+
+        function moveToPlePlace(place) {
+            const position = new kakao.maps.LatLng(place.y, place.x);
+
+            if (isMapLocked) {
+                showToast('화면 고정을 해제하면 이동합니다');
+                return;
+            }
+
+            map.setCenter(position);
+            map.setLevel(3);
+        }
+
+        function callPlace(phone) {
+            if (!phone) {
+                showToast('전화번호가 없습니다');
+                return;
+            }
+            window.location.href = `tel:${phone}`;
+        }
+
+        function openPlaceDirection(placeName, lat, lng) {
+            const name = encodeURIComponent(placeName);
+            if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+                window.location.href = `kakaomap://route?ep=${lat},${lng}&by=CAR`;
+                setTimeout(() => {
+                    window.open(`https://map.kakao.com/link/to/${name},${lat},${lng}`, '_blank');
+                }, 1000);
+            } else {
+                window.open(`https://map.kakao.com/link/to/${name},${lat},${lng}`, '_blank');
+            }
+        }
+
+        function closePlaceResult() {
+            document.getElementById('placeResultPanel').classList.remove('open');
+        }
+
+        // 금액 상세 모달 기능
+        let currentPrice4week = 0;
+
+        function showPriceDetail() {
+            if (!selectedLocation || !currentPrice4week) {
+                showToast('금액 정보가 없습니다');
+                return;
+            }
+
+            // 4주 금액
+            const price4 = currentPrice4week;
+            // 24주 금액 (4주 * 6 = 24주, 5% 할인)
+            const price24 = Math.round(price4 * 6 * 0.95);
+            // 48주 금액 (4주 * 12 = 48주, 10% 할인)
+            const price48 = Math.round(price4 * 12 * 0.90);
+
+            document.getElementById('price4week').textContent = price4.toLocaleString() + '원';
+            document.getElementById('price24week').textContent = price24.toLocaleString() + '원';
+            document.getElementById('price48week').textContent = price48.toLocaleString() + '원';
+
+            document.getElementById('priceOverlay').classList.add('open');
+            document.getElementById('priceModal').classList.add('open');
+        }
+
+        function closePriceModal() {
+            document.getElementById('priceOverlay').classList.remove('open');
+            document.getElementById('priceModal').classList.remove('open');
+        }
+    </script>
+</body>
+</html>
